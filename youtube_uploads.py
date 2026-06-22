@@ -12,7 +12,7 @@ load_dotenv()
 
 # ---------------- Configuration ----------------
 
-HEADERS = {"User-Agent": "reddit-video-downloader/1.0"}
+HEADERS = {"User-Agent": "script:daily-uploads-bot:v1.0 (by /u/shashank_uploader)"}
 VIDEO_DOWNLOAD_DIR = "videos"
 os.makedirs(VIDEO_DOWNLOAD_DIR, exist_ok=True)
 

@@ -12,8 +12,7 @@ from urllib.parse import urlparse
 load_dotenv()
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                  "Chrome/114.0.0.0 Safari/537.36"
+    "User-Agent": "script:daily-uploads-bot:v1.0 (by /u/shashank_uploader)"
 }
 
 IMAGE_DOWNLOAD_DIR = "ig_images"
