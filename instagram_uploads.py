@@ -211,8 +211,30 @@ def post_to_instagram_video(video_path: str, caption: str):
         print(f"[ERROR] Instagram video upload failed: {e}")
 
 def main():
+    import sys
+    auto_mode = sys.argv[1].lower() if len(sys.argv) > 1 else None
+    if auto_mode == "both":
+        choices_queue = ['i', 'v']
+    elif auto_mode in ['i', 'v']:
+        choices_queue = [auto_mode]
+    else:
+        choices_queue = []
+
     while True:
-        choice = input("Enter 'i' to post images, 'v' to post videos, or 'q' to quit: ").strip().lower()
+        if auto_mode:
+            if not choices_queue:
+                break
+            choice = choices_queue.pop(0)
+            print(f"\n[INFO] Auto-running choice: {choice}")
+        else:
+            try:
+                choice = input("Enter 'i' to post images, 'v' to post videos, or 'q' to quit: ").strip().lower()
+            except EOFError:
+                print("\n[INFO] Non-interactive environment detected. Auto-running both images and videos.")
+                auto_mode = "both"
+                choices_queue = ['v']
+                choice = 'i'
+
         if choice == 'q':
             print("Exiting.")
             break
