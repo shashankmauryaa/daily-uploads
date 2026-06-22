@@ -8,6 +8,8 @@ import httpx
 import ast
 from dotenv import load_dotenv
 from urllib.parse import urlparse
+from openai import OpenAI
+from instagrapi import Client
 
 load_dotenv()
 
@@ -125,9 +127,6 @@ def download_file(url, output_dir):
             os.remove(local_filename)
         return None
 
-import httpx
-from openai import OpenAI
-
 class HashtagGeneratorClient:
     def __init__(self):
         self.client = OpenAI(
@@ -180,8 +179,6 @@ class HashtagGeneratorClient:
         except Exception as e:
             print(f"[!] Failed to parse hashtags from code: {e}")
             return []
-
-from instagrapi import Client
 
 def post_to_instagram_photo(image_path: str, caption: str):
     if not username or not password:

@@ -7,6 +7,10 @@ import time
 import httpx
 import ast
 from dotenv import load_dotenv
+from openai import OpenAI
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
 
 load_dotenv()
 
@@ -80,9 +84,6 @@ def download_video(url):
 
 # ---------------- Hashtag Generator ----------------
 
-import httpx
-from openai import OpenAI
-
 class HashtagGeneratorClient:
     def __init__(self):
         self.client = OpenAI(
@@ -139,13 +140,7 @@ class HashtagGeneratorClient:
 # ---------------- YouTube Upload ----------------
 
 def post_to_youtube(video_path: str, title: str, description: str, tags: list[str] = None):
-    try:
-        from google.oauth2.credentials import Credentials
-        from googleapiclient.discovery import build
-        from googleapiclient.http import MediaFileUpload
-    except ImportError:
-        print("[ERROR] google-api-python-client and oauth2client are required for YouTube upload.")
-        return
+    # Credentials and API imports moved to the top of the file
 
     creds = Credentials.from_authorized_user_file("youtube_token.json", ["https://www.googleapis.com/auth/youtube.upload"])
     youtube = build("youtube", "v3", credentials=creds)
