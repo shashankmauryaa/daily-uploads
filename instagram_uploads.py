@@ -33,7 +33,7 @@ SUBREDDIT_IMAGES = "KidsAreFuckingStupid"
 SUBREDDIT_VIDEOS = "ChildrenFallingOver" # "stupidkidsgettinghurt"
 LIMIT_PER_FETCH = 20
 TARGET_POSTS = 1
-TIMEFRAME = "day"
+TIMEFRAME = "week"
 REQUEST_DELAY = 2
 
 def is_image_url(url):
@@ -50,17 +50,58 @@ def is_video_url(url):
     mime_type, _ = guess_type(url)
     return mime_type and mime_type.startswith("video")
 
+import re
+import html
+import subprocess
+
 def fetch_subreddit_best(subreddit, limit=LIMIT_PER_FETCH, timeframe=TIMEFRAME, after=None):
-    url = f"https://www.reddit.com/r/{subreddit}/best.json"
-    params = {"t": timeframe, "limit": limit}
+    url = f"https://old.reddit.com/r/{subreddit}/top/?sort=top&t={timeframe}&limit={limit}"
     if after:
-        params["after"] = after
-    print(f"[INFO] Fetching best posts from r/{subreddit}...")
-    response = requests.get(url, headers=HEADERS, params=params, timeout=20)
-    response.raise_for_status()
-    posts = response.json()["data"]["children"]
-    after = response.json()["data"].get("after")
-    return posts, after
+        url += f"&after={after}&count={limit}"
+    
+    print(f"[INFO] Fetching top posts from r/{subreddit} via curl HTML scraping...")
+    
+    # We use curl because python 'requests' has a known TLS fingerprint that Reddit often blocks (403)
+    curl_cmd = [
+        "curl", "-s", url,
+        "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "-H", "Accept-Language: en-US,en;q=0.9"
+    ]
+    
+    result = subprocess.run(curl_cmd, capture_output=True, text=True)
+    if result.returncode != 0 or not result.stdout:
+        print("[ERROR] Failed to fetch HTML via curl")
+        return [], None
+        
+    page_html = result.stdout
+    
+    # Extract posts using regex
+    # Match standard reddit 'thing' divs to get data-url and title
+    pattern = r'<div class="[^"]*?thing[^"]*?"[ \n]+.*?data-url="(.*?)".*?data-event-action="title".*?>(.*?)</a>'
+    matches = re.findall(pattern, page_html, re.DOTALL)
+    
+    # Try to extract the 'next' page id
+    next_page_match = re.search(r'class="next-button".*?href="[^"]*?after=([^"&]+)', page_html)
+    next_after = next_page_match.group(1) if next_page_match else None
+    
+    posts = []
+    for media_url, title in matches:
+        title = html.unescape(title)
+        
+        # Handle relative URLs
+        if media_url.startswith("/"):
+            media_url = "https://www.reddit.com" + media_url
+            
+        # Re-construct a dictionary matching the old JSON format
+        posts.append({
+            "data": {
+                "title": title,
+                "url": media_url,
+                "url_overridden_by_dest": media_url
+            }
+        })
+        
+    return posts, next_after
 
 def download_image(url):
     local_filename = os.path.join(IMAGE_DOWNLOAD_DIR, os.path.basename(url.split("?")[0]))
