@@ -104,26 +104,36 @@ def fetch_subreddit_best(subreddit, limit=LIMIT_PER_FETCH, timeframe=TIMEFRAME, 
     return posts, next_after
 
 def download_image(url):
+    import subprocess
     local_filename = os.path.join(IMAGE_DOWNLOAD_DIR, os.path.basename(url.split("?")[0]))
     if os.path.exists(local_filename):
         print(f"[SKIP] Already downloaded image: {local_filename}")
         return None
-    print(f"[DOWNLOAD] Downloading image from {url}")
+    print(f"[DOWNLOAD] Downloading image from {url} using curl")
     try:
-        with requests.get(url, stream=True, timeout=30) as r:
-            r.raise_for_status()
-            with open(local_filename, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-        print(f"[SUCCESS] Saved image to {local_filename}")
-        return local_filename
+        curl_cmd = [
+            "curl", "-s", "-L", url,
+            "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "-o", local_filename
+        ]
+        result = subprocess.run(curl_cmd)
+        if result.returncode == 0 and os.path.exists(local_filename) and os.path.getsize(local_filename) > 0:
+            print(f"[SUCCESS] Saved image to {local_filename}")
+            return local_filename
+        else:
+            print(f"[ERROR] Failed to download image {url}: curl returned {result.returncode}")
+            if os.path.exists(local_filename):
+                os.remove(local_filename)
+            return None
     except Exception as e:
-        print(f"[ERROR] Failed to download image {url}: {e}")
+        print(f"[ERROR] Exception downloading image {url}: {e}")
         if os.path.exists(local_filename):
             os.remove(local_filename)
         return None
 
 def download_video(url, output_dir):
+    from urllib.parse import urlparse
+    import subprocess
     os.makedirs(output_dir, exist_ok=True)
     base_url = url if url.endswith("/") else url + "/"
     video_url = base_url + "DASH_720.mp4"
@@ -133,37 +143,52 @@ def download_video(url, output_dir):
         print(f"[SKIP] Already downloaded video: {output_path}")
         return None
     try:
-        print(f"[DOWNLOAD] Downloading video stream from: {base_url}")
-        with requests.get(video_url, stream=True, timeout=30) as r:
-            r.raise_for_status()
-            with open(output_path, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-        print(f"[SUCCESS] Saved video to {output_path}")
-        return output_path
+        print(f"[DOWNLOAD] Downloading video stream from: {video_url} using curl")
+        curl_cmd = [
+            "curl", "-s", "-L", video_url,
+            "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "-o", output_path
+        ]
+        result = subprocess.run(curl_cmd)
+        if result.returncode == 0 and os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            print(f"[SUCCESS] Saved video to {output_path}")
+            return output_path
+        else:
+            print(f"[ERROR] Failed to download video {video_url}: curl returned {result.returncode}")
+            if os.path.exists(output_path):
+                os.remove(output_path)
+            return None
     except Exception as e:
-        print(f"[ERROR] Failed to download video {base_url}: {e}")
+        print(f"[ERROR] Exception downloading video {base_url}: {e}")
         if os.path.exists(output_path):
             os.remove(output_path)
         return None
 
 def download_file(url, output_dir):
+    import subprocess
     os.makedirs(output_dir, exist_ok=True)
     local_filename = os.path.join(output_dir, os.path.basename(url.split("?")[0]))
     if os.path.exists(local_filename):
         print(f"[SKIP] Already downloaded file: {local_filename}")
         return None
-    print(f"[DOWNLOAD] Downloading file from {url}")
+    print(f"[DOWNLOAD] Downloading file from {url} using curl")
     try:
-        with requests.get(url, stream=True, timeout=30) as r:
-            r.raise_for_status()
-            with open(local_filename, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-        print(f"[SUCCESS] Saved file to {local_filename}")
-        return local_filename
+        curl_cmd = [
+            "curl", "-s", "-L", url,
+            "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "-o", local_filename
+        ]
+        result = subprocess.run(curl_cmd)
+        if result.returncode == 0 and os.path.exists(local_filename) and os.path.getsize(local_filename) > 0:
+            print(f"[SUCCESS] Saved file to {local_filename}")
+            return local_filename
+        else:
+            print(f"[ERROR] Failed to download file {url}: curl returned {result.returncode}")
+            if os.path.exists(local_filename):
+                os.remove(local_filename)
+            return None
     except Exception as e:
-        print(f"[ERROR] Failed to download file {url}: {e}")
+        print(f"[ERROR] Exception downloading file {url}: {e}")
         if os.path.exists(local_filename):
             os.remove(local_filename)
         return None

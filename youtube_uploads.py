@@ -105,6 +105,7 @@ def fetch_subreddit_best(subreddit, limit=LIMIT_PER_FETCH, timeframe=TIMEFRAME, 
 
 def download_video(url):
     from urllib.parse import urlparse
+    import subprocess
     base_url = url if url.endswith("/") else url + "/"
     if "v.redd.it" in url:
         download_url = base_url + "DASH_720.mp4"
@@ -118,17 +119,24 @@ def download_video(url):
         print(f"[SKIP] Already downloaded video: {local_filename}")
         return local_filename
         
-    print(f"[DOWNLOAD] Downloading video from {download_url}")
+    print(f"[DOWNLOAD] Downloading video from {download_url} using curl")
     try:
-        with requests.get(download_url, stream=True, timeout=30) as r:
-            r.raise_for_status()
-            with open(local_filename, "wb") as f:
-                for chunk in r.iter_content(chunk_size=8192):
-                    f.write(chunk)
-        print(f"[SUCCESS] Saved video to {local_filename}")
-        return local_filename
+        curl_cmd = [
+            "curl", "-s", "-L", download_url,
+            "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "-o", local_filename
+        ]
+        result = subprocess.run(curl_cmd)
+        if result.returncode == 0 and os.path.exists(local_filename) and os.path.getsize(local_filename) > 0:
+            print(f"[SUCCESS] Saved video to {local_filename}")
+            return local_filename
+        else:
+            print(f"[ERROR] Failed to download video {download_url}: curl returned {result.returncode}")
+            if os.path.exists(local_filename):
+                os.remove(local_filename)
+            return None
     except Exception as e:
-        print(f"[ERROR] Failed to download video {download_url}: {e}")
+        print(f"[ERROR] Exception during video download {download_url}: {e}")
         if os.path.exists(local_filename):
             os.remove(local_filename)
         return None

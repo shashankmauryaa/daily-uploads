@@ -26,11 +26,11 @@ def main():
             except Exception as e:
                 print(f"Failed to refresh token: {e}. Starting new OAuth flow...")
                 flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-                creds = flow.run_local_server(port=0, open_browser=False)
+                creds = flow.run_local_server(port=0)
         else:
             print("No valid token found. Starting new OAuth flow...")
             flow = InstalledAppFlow.from_client_secrets_file('client_secret.json', SCOPES)
-            creds = flow.run_local_server(port=0, open_browser=False)
+            creds = flow.run_local_server(port=0)
             
         # Save the credentials for the next run
         with open('youtube_token.json', 'w') as token:
