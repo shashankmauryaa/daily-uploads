@@ -2,9 +2,8 @@ name: Daily Uploads
 
 on:
   schedule:
-    # Runs at 10:00 UTC (roughly morning in US, afternoon in Europe)
-    # You can customize this cron expression as needed.
-    - cron: '0 10 * * *'
+    # Runs at 02:30 UTC, which corresponds to 8:00 AM IST
+    - cron: '30 2 * * *'
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
